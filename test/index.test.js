@@ -7,7 +7,7 @@ const index = require('../')
 test.before(() => {
   sinon.stub(Db.prototype, 'connect')
   sinon.stub(Db.prototype, 'close')
-  sinon.stub(Process, 'process').resolves()
+  sinon.stub(Process, 'process').resolves({ success: true })
 })
 
 test.afterEach(() => {
@@ -21,13 +21,17 @@ test.after.always(() => {
 })
 
 test.serial('processes records and closes db', async (t) => {
-  await index.handler()
+  await index.handler({
+    Records: [{ body: 'blah' }]
+  })
   t.true(Process.process.calledOnce)
   t.true(Db.prototype.close.calledOnce)
 })
 
 test.serial('throws on processing errors', async (t) => {
   Process.process.rejects()
-  await t.throwsAsync(index.handler)
+  await t.throwsAsync(index.handler({
+    Records: [{ body: 'blah' }]
+  }))
   t.true(Db.prototype.close.calledOnce)
 })
