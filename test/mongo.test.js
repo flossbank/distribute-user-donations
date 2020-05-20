@@ -1,7 +1,11 @@
 const test = require('ava')
 const sinon = require('sinon')
-const { MongoClient, ObjectId } = require('mongodb')
+const { MongoClient } = require('mongodb')
 const Mongo = require('../lib/mongo')
+
+test.before(() => {
+  sinon.stub(Date, 'now').returns(1234)
+})
 
 test.beforeEach((t) => {
   t.context.mongo = new Mongo({
@@ -9,39 +13,31 @@ test.beforeEach((t) => {
       getMongoUri: async () => 'mongodb+srv://0.0.0.0/test'
     }
   })
-  t.context.mongo.batchSize = 2
+
+  t.context.userId = 'aaaaaaaaaaaa'
+  t.context.packageInstallsForUser = [{ 
+      _id: 'package-1aaa',
+      weight: 0.015
+    },
+    {
+      _id: 'package-2bbb',
+      weight: 0.5
+    },
+    {
+      _id: 'package-3ccc',
+      weight: 1.5
+    }
+  ]
+  t.context.packageWeightsMap = new Map([['package-1aaa', 0.015], ['package-2bbb', 0.5], ['package-3ccc', 1.5]])
+
   t.context.mongo.db = {
     collection: sinon.stub().returns({
-      findOne: sinon.stub().resolves({ // getting pool amount from meta table
-        data: { amount: 1500 }
+      findOne: sinon.stub().resolves({ 
+        _id: 'test-user'
       }),
       aggregate: sinon.stub().returns({
-        toArray: sinon.stub().resolves([{ // total package installs across entire db
-          _id: null,
-          totalInstalls: 5
-        }])
+        toArray: sinon.stub().resolves(t.context.packageInstallsForUser)
       }),
-      find: sinon.stub().returns({
-        project: sinon.stub().returns({
-          limit: sinon.stub().returns({
-            toArray: sinon.stub().onFirstCall().resolves([ // batch of packages
-              {
-                _id: ObjectId('5e2d194c05a98a206286b844'), // 2 installs
-                installs: [{}, {}]
-              },
-              {
-                _id: ObjectId('5e2d194c05a98a206286b845') // no installs
-              }
-            ]).onSecondCall().resolves([
-              {
-                _id: ObjectId('5e2d194c05a98a206286b846'), // 3 installs
-                installs: [{}, {}, {}]
-              }
-            ])
-          })
-        })
-      }),
-      updateOne: sinon.stub().resolves(),
       initializeUnorderedBulkOp: sinon.stub().returns({
         find: sinon.stub().returns({
           updateOne: sinon.stub()
@@ -70,38 +66,53 @@ test('close', async (t) => {
   t.true(t.context.mongo.mongoClient.close.calledOnce)
 })
 
-test('distribute pooled funds | nothing to distribute', async (t) => {
+test('find UserId | success', async (t) => {
   t.context.mongo.db.collection().findOne.resolves({
-    data: { amount: 0 }
+    _id: 'nico',
+    apiKey: 'blah'
   })
-  const res = await t.context.mongo.distributePooledFunds()
-  t.is(res.amount, 0)
-  t.is(res.totalAmountUsed, 0)
+  const res = await t.context.mongo.findUserId({ customerId: 'blanket' })
+  t.is(res, 'nico')
 })
 
-test('distribute pooled funds | aggregate returns nothing', async (t) => {
-  t.context.mongo.db.collection().aggregate().toArray.resolves([])
-  const res = await t.context.mongo.distributePooledFunds()
-  t.is(res.amount, 0)
-  t.is(res.totalAmountUsed, 0)
+test('find UserId | returns undefined if non existent', async (t) => {
+  t.context.mongo.db.collection().findOne.resolves(undefined)
+  const res = await t.context.mongo.findUserId({ customerId: 'blanket' })
+  t.is(res, undefined)
 })
 
-test('distribute pooled funds | empty batch', async (t) => {
-  t.context.mongo.db.collection().find().project().limit().toArray.onFirstCall().resolves([])
-  const res = await t.context.mongo.distributePooledFunds()
-  t.is(res.amount, 1500)
-  t.is(res.totalAmountUsed, 0)
+test('create Package Weights Map | success', async (t) => {
+  const res = await t.context.mongo.createPackageWeightsMap({ userId: t.context.userId })
+  t.deepEqual(res, t.context.packageWeightsMap)
 })
 
-test('distribute pooled funds | funds to distribute', async (t) => {
-  const res = await t.context.mongo.distributePooledFunds()
-  t.is(res.amount, 1500)
-  t.is(res.totalAmountUsed, 1500)
+test('create Package Weights Map | error in aggregation', async (t) => {
+  t.context.mongo.db.collection().aggregate().toArray.rejects()
+  await t.throwsAsync(t.context.mongo.createPackageWeightsMap({ userId: t.context.userId }))
+})
 
+test('distribute User Donation | success', async (t) => {
+  const expectedTotalMass = t.context.packageInstallsForUser.reduce((acc, val) => acc + val.weight, 0)
+  const donationAmount = 1000000 // 10 bucks in mc
+  const packageWeightsMap = t.context.packageWeightsMap
+  await t.context.mongo.distributeUserDonation({ userId: t.context.userId, packageWeightsMap, donationAmount })
+  // 3 pushes for 3 diff packages in our packageWeightsMap
   t.true(t.context.mongo.db.collection().initializeUnorderedBulkOp().find().updateOne.calledWith({
-    $inc: { dividend: (2 / 5) * 1500 } // pkg with 2 installs
+    $push: { donationRevenue: { 
+      userId: t.context.userId, 
+      timestamp: 1234, 
+      amount: ((packageWeightsMap.get('package-1aaa') / expectedTotalMass) * donationAmount) } } 
   }))
   t.true(t.context.mongo.db.collection().initializeUnorderedBulkOp().find().updateOne.calledWith({
-    $inc: { dividend: (3 / 5) * 1500 } // pkg with 3 installs
+    $push: { donationRevenue: { 
+      userId: t.context.userId, 
+      timestamp: 1234, 
+      amount: ((packageWeightsMap.get('package-2bbb') / expectedTotalMass) * donationAmount) } }
+  }))
+  t.true(t.context.mongo.db.collection().initializeUnorderedBulkOp().find().updateOne.calledWith({
+    $push: { donationRevenue: { 
+      userId: t.context.userId, 
+      timestamp: 1234, 
+      amount: ((packageWeightsMap.get('package-3ccc') / expectedTotalMass) * donationAmount) } } 
   }))
 })
