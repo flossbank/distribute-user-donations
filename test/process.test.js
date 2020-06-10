@@ -25,8 +25,8 @@ test.beforeEach((t) => {
 })
 
 test('process | success', async (t) => {
-  const res = await Process.process({ 
-    db: t.context.db, 
+  const res = await Process.process({
+    db: t.context.db,
     log: t.context.log,
     dynamo: t.context.dynamo,
     record: t.context.testRecord
@@ -34,18 +34,19 @@ test('process | success', async (t) => {
   t.true(t.context.log.calledWith({ ...t.context.recordBody }))
   t.true(t.context.db.findUserId.calledWith({ customerId: t.context.recordBody.customerId }))
   t.true(t.context.dynamo.lockUser.calledWith({ userId: 'test-user-id' }))
-  t.true(t.context.log.calledWith({ lockInfo: { success: true}}))
+  t.true(t.context.log.calledWith({ lockInfo: { success: true } }))
   t.true(t.context.db.distributeUserDonation.calledWith({
-    donationAmount: t.context.recordBody.amount * 1000, 
-    packageWeightsMap: {}, 
-    userId: 'test-user-id' }))
+    donationAmount: t.context.recordBody.amount * 1000,
+    packageWeightsMap: {},
+    userId: 'test-user-id'
+  }))
   t.deepEqual(res, { success: true })
 })
 
 test('process | failure, undefined returned fetching user', async (t) => {
   t.context.db.findUserId.resolves(undefined)
-  await t.throwsAsync(Process.process({ 
-    db: t.context.db, 
+  await t.throwsAsync(Process.process({
+    db: t.context.db,
     log: t.context.log,
     dynamo: t.context.dynamo,
     record: t.context.testRecord
@@ -54,8 +55,8 @@ test('process | failure, undefined returned fetching user', async (t) => {
 
 test('process | failure, user already locked', async (t) => {
   t.context.dynamo.lockUser.rejects()
-  await t.throwsAsync(Process.process({ 
-    db: t.context.db, 
+  await t.throwsAsync(Process.process({
+    db: t.context.db,
     log: t.context.log,
     dynamo: t.context.dynamo,
     record: t.context.testRecord
@@ -65,8 +66,8 @@ test('process | failure, user already locked', async (t) => {
 
 test('process | failure, distributeUserDonation fails', async (t) => {
   t.context.db.distributeUserDonation.rejects()
-  await t.throwsAsync(Process.process({ 
-    db: t.context.db, 
+  await t.throwsAsync(Process.process({
+    db: t.context.db,
     log: t.context.log,
     dynamo: t.context.dynamo,
     record: t.context.testRecord
