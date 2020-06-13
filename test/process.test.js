@@ -35,8 +35,9 @@ test('process | success', async (t) => {
   t.true(t.context.db.findUserId.calledWith({ customerId: t.context.recordBody.customerId }))
   t.true(t.context.dynamo.lockUser.calledWith({ userId: 'test-user-id' }))
   t.true(t.context.log.calledWith({ lockInfo: { success: true}}))
+  const expectedDonationAmount = ((t.context.recordBody.amount * .94) - 30) * 1000
   t.true(t.context.db.distributeUserDonation.calledWith({
-    donationAmount: t.context.recordBody.amount * 1000, 
+    donationAmount: expectedDonationAmount, 
     packageWeightsMap: {}, 
     userId: 'test-user-id' }))
   t.deepEqual(res, { success: true })
