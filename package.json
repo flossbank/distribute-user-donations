@@ -4,8 +4,8 @@
   "description": "distribute-user-donations",
   "main": "index.js",
   "scripts": {
-    "ci-tests": "nyc --reporter=cobertura ava -t | tap-xunit > TEST_RESULTS.xml",
-    "test": "ava -v"
+    "ci-tests": "nyc --reporter=cobertura ava",
+    "test": "standard --fix && ava -v"
   },
   "dependencies": {
     "aws-sdk": "^2.543.0",
@@ -32,7 +32,6 @@
     "husky": "^4.2.5",
     "nyc": "^15.0.0",
     "sinon": "^9.0.1",
-    "standard": "^14.3.1",
-    "tap-xunit": "^2.4.1"
+    "standard": "^14.3.1"
   }
 }
