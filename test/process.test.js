@@ -12,7 +12,7 @@ test.beforeEach((t) => {
     lockUser: sinon.stub().resolves({ success: true }),
     unlockUser: sinon.stub().resolves({ success: true })
   }
-  t.context.log = sinon.stub()
+  t.context.log = { log: sinon.stub() }
   t.context.recordBody = {
     amount: 1000,
     timestamp: 1234,
@@ -31,10 +31,10 @@ test('process | success', async (t) => {
     dynamo: t.context.dynamo,
     record: t.context.testRecord
   })
-  t.true(t.context.log.calledWith({ ...t.context.recordBody }))
+  t.true(t.context.log.log.calledWith({ ...t.context.recordBody }))
   t.true(t.context.db.findUserId.calledWith({ customerId: t.context.recordBody.customerId }))
   t.true(t.context.dynamo.lockUser.calledWith({ userId: 'test-user-id' }))
-  t.true(t.context.log.calledWith({ lockInfo: { success: true } }))
+  t.true(t.context.log.log.calledWith({ lockInfo: { success: true } }))
   const expectedDonationAmount = ((t.context.recordBody.amount * 0.94) - 30) * 1000
   t.true(t.context.db.distributeUserDonation.calledWith({
     donationAmount: expectedDonationAmount,
