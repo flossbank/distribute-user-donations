@@ -4,9 +4,7 @@ const Process = require('../lib/process')
 
 test.beforeEach((t) => {
   t.context.db = {
-    findUserId: sinon.stub().resolves({
-      toString: () => 'test-user-id'
-    }),
+    findUserId: sinon.stub().resolves('test-user-id'),
     createPackageWeightsMap: sinon.stub().resolves({}),
     distributeUserDonation: sinon.stub()
   }
