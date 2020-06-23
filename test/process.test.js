@@ -4,7 +4,9 @@ const Process = require('../lib/process')
 
 test.beforeEach((t) => {
   t.context.db = {
-    findUserId: sinon.stub().resolves('test-user-id'),
+    findUserId: sinon.stub().resolves({
+      toString: () => 'test-user-id'
+    }),
     createPackageWeightsMap: sinon.stub().resolves({}),
     distributeUserDonation: sinon.stub()
   }
@@ -21,6 +23,15 @@ test.beforeEach((t) => {
   }
   t.context.testRecord = {
     body: JSON.stringify(t.context.recordBody)
+  }
+  t.context.undefinedCustomerRecordBody = {
+    amount: 1000,
+    timestamp: 1234,
+    customerId: undefined,
+    description: 'testing donation'
+  }
+  t.context.undefinedCustomerTestRecord = {
+    body: JSON.stringify(t.context.undefinedCustomerRecordBody)
   }
 })
 
@@ -51,6 +62,15 @@ test('process | failure, undefined returned fetching user', async (t) => {
     log: t.context.log,
     dynamo: t.context.dynamo,
     record: t.context.testRecord
+  }))
+})
+
+test('process | failure, undefined customer id', async (t) => {
+  await t.throwsAsync(Process.process({
+    db: t.context.db,
+    log: t.context.log,
+    dynamo: t.context.dynamo,
+    record: t.context.undefinedCustomerTestRecord
   }))
 })
 
