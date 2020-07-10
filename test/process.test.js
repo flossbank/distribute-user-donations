@@ -22,6 +22,15 @@ test.beforeEach((t) => {
   t.context.testRecord = {
     body: JSON.stringify(t.context.recordBody)
   }
+  t.context.undefinedCustomerRecordBody = {
+    amount: 1000,
+    timestamp: 1234,
+    customerId: undefined,
+    description: 'testing donation'
+  }
+  t.context.undefinedCustomerTestRecord = {
+    body: JSON.stringify(t.context.undefinedCustomerRecordBody)
+  }
 })
 
 test('process | success', async (t) => {
@@ -51,6 +60,15 @@ test('process | failure, undefined returned fetching user', async (t) => {
     log: t.context.log,
     dynamo: t.context.dynamo,
     record: t.context.testRecord
+  }))
+})
+
+test('process | failure, undefined customer id', async (t) => {
+  await t.throwsAsync(Process.process({
+    db: t.context.db,
+    log: t.context.log,
+    dynamo: t.context.dynamo,
+    record: t.context.undefinedCustomerTestRecord
   }))
 })
 
