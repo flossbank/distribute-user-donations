@@ -91,6 +91,17 @@ test('create Package Weights Map | error in aggregation', async (t) => {
   await t.throwsAsync(t.context.mongo.createPackageWeightsMap({ userId: t.context.userId }))
 })
 
+test('bail on empty package weights map meaning user has no installs', async (t) => {
+  const donationAmount = 500000 // 5 bucks in mc
+  await t.context.mongo.distributeUserDonation({
+    userId: t.context.userId,
+    packageWeightsMap: new Map(),
+    donationAmount
+  })
+  // Should not call bulk op
+  t.false(t.context.mongo.db.collection().initializeUnorderedBulkOp().find().updateOne.calledOnce)
+})
+
 test('distribute User Donation | success', async (t) => {
   const expectedTotalMass = t.context.packageInstallsForUser.reduce((acc, val) => acc + val.weight, 0)
   const donationAmount = 1000000 // 10 bucks in mc
