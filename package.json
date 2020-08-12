@@ -4,8 +4,9 @@
   "description": "distribute-user-donations",
   "main": "index.js",
   "scripts": {
+    "lint": "standard --fix",
     "ci-tests": "nyc --reporter=cobertura ava",
-    "test": "standard --fix && ava -v"
+    "test": "standard && ava -v"
   },
   "dependencies": {
     "aws-sdk": "^2.543.0",

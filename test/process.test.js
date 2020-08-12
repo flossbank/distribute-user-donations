@@ -4,7 +4,6 @@ const Process = require('../lib/process')
 
 test.beforeEach((t) => {
   t.context.db = {
-    findUserId: sinon.stub().resolves('test-user-id'),
     createPackageWeightsMap: sinon.stub().resolves({}),
     distributeUserDonation: sinon.stub()
   }
@@ -16,20 +15,20 @@ test.beforeEach((t) => {
   t.context.recordBody = {
     amount: 1000,
     timestamp: 1234,
-    customerId: 'customerid',
+    userId: 'test-user-id',
     description: 'testing donation'
   }
   t.context.testRecord = {
     body: JSON.stringify(t.context.recordBody)
   }
-  t.context.undefinedCustomerRecordBody = {
+  t.context.undefinedUserRecordBody = {
     amount: 1000,
     timestamp: 1234,
-    customerId: undefined,
+    userId: undefined,
     description: 'testing donation'
   }
-  t.context.undefinedCustomerTestRecord = {
-    body: JSON.stringify(t.context.undefinedCustomerRecordBody)
+  t.context.undefinedUserTestBody = {
+    body: JSON.stringify(t.context.undefinedUserRecordBody)
   }
 })
 
@@ -41,7 +40,6 @@ test('process | success', async (t) => {
     record: t.context.testRecord
   })
   t.true(t.context.log.log.calledWith({ ...t.context.recordBody }))
-  t.true(t.context.db.findUserId.calledWith({ customerId: t.context.recordBody.customerId }))
   t.true(t.context.dynamo.lockUser.calledWith({ userId: 'test-user-id' }))
   t.true(t.context.log.log.calledWith({ lockInfo: { success: true } }))
   const expectedDonationAmount = ((t.context.recordBody.amount * 0.94) - 30) * 1000
@@ -53,22 +51,12 @@ test('process | success', async (t) => {
   t.deepEqual(res, { success: true })
 })
 
-test('process | failure, undefined returned fetching user', async (t) => {
-  t.context.db.findUserId.resolves(undefined)
+test('process | failure, undefined user id', async (t) => {
   await t.throwsAsync(Process.process({
     db: t.context.db,
     log: t.context.log,
     dynamo: t.context.dynamo,
-    record: t.context.testRecord
-  }))
-})
-
-test('process | failure, undefined customer id', async (t) => {
-  await t.throwsAsync(Process.process({
-    db: t.context.db,
-    log: t.context.log,
-    dynamo: t.context.dynamo,
-    record: t.context.undefinedCustomerTestRecord
+    record: t.context.undefinedUserTestRecord
   }))
 })
 
