@@ -32,9 +32,6 @@ test.beforeEach((t) => {
 
   t.context.mongo.db = {
     collection: sinon.stub().returns({
-      findOne: sinon.stub().resolves({
-        _id: 'test-user'
-      }),
       aggregate: sinon.stub().returns({
         toArray: sinon.stub().resolves(t.context.packageInstallsForUser)
       }),
@@ -64,21 +61,6 @@ test('close', async (t) => {
   t.context.mongo.mongoClient = { close: sinon.stub() }
   await t.context.mongo.close()
   t.true(t.context.mongo.mongoClient.close.calledOnce)
-})
-
-test('find UserId | success', async (t) => {
-  t.context.mongo.db.collection().findOne.resolves({
-    _id: 'nico',
-    apiKey: 'blah'
-  })
-  const res = await t.context.mongo.findUserId({ customerId: 'blanket' })
-  t.is(res, 'nico')
-})
-
-test('find UserId | returns undefined if non existent', async (t) => {
-  t.context.mongo.db.collection().findOne.resolves(undefined)
-  const res = await t.context.mongo.findUserId({ customerId: 'blanket' })
-  t.is(res, undefined)
 })
 
 test('create Package Weights Map | success', async (t) => {
