@@ -35,3 +35,11 @@ test.serial('throws on processing errors', async (t) => {
   }))
   t.true(Db.prototype.close.calledOnce)
 })
+
+test.serial('throws on processing failures', async (t) => {
+  Process.process.resolves({ success: false })
+  await t.throwsAsync(index.handler({
+    Records: [{ body: 'blah' }]
+  }), { message: '[{"success":false}]' })
+  t.true(Db.prototype.close.calledOnce)
+})

@@ -10,7 +10,8 @@
   },
   "dependencies": {
     "aws-sdk": "^2.543.0",
-    "mongodb": "^3.4.1"
+    "mongodb": "^3.4.1",
+    "ulid": "^2.3.0"
   },
   "husky": {
     "hooks": {
