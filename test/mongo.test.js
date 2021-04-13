@@ -2,9 +2,15 @@ const test = require('ava')
 const sinon = require('sinon')
 const { MongoClient } = require('mongodb')
 const Mongo = require('../lib/mongo')
+const ULID = require('ulid')
 
 test.before(() => {
   sinon.stub(Date, 'now').returns(1234)
+  sinon.stub(ULID, 'ulid').returns('this-is-a-ulid')
+})
+
+test.after(() => {
+  sinon.restore()
 })
 
 test.beforeEach((t) => {
@@ -95,6 +101,7 @@ test('distribute User Donation | success', async (t) => {
       donationRevenue: {
         userId: t.context.userId,
         timestamp: 1234,
+        id: 'this-is-a-ulid',
         amount: ((packageWeightsMap.get('package-1aaa') / expectedTotalMass) * donationAmount)
       }
     }
@@ -104,6 +111,7 @@ test('distribute User Donation | success', async (t) => {
       donationRevenue: {
         userId: t.context.userId,
         timestamp: 1234,
+        id: 'this-is-a-ulid',
         amount: ((packageWeightsMap.get('package-2bbb') / expectedTotalMass) * donationAmount)
       }
     }
@@ -113,6 +121,7 @@ test('distribute User Donation | success', async (t) => {
       donationRevenue: {
         userId: t.context.userId,
         timestamp: 1234,
+        id: 'this-is-a-ulid',
         amount: ((packageWeightsMap.get('package-3ccc') / expectedTotalMass) * donationAmount)
       }
     }

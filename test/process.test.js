@@ -27,7 +27,7 @@ test.beforeEach((t) => {
     userId: undefined,
     description: 'testing donation'
   }
-  t.context.undefinedUserTestBody = {
+  t.context.undefinedUserTestRecord = {
     body: JSON.stringify(t.context.undefinedUserRecordBody)
   }
 })
