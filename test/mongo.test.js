@@ -20,6 +20,7 @@ test.beforeEach((t) => {
     }
   })
 
+  t.context.description = 'invoice 01'
   t.context.userId = 'aaaaaaaaaaaa'
   t.context.packageInstallsForUser = [{
     _id: 'package-1aaa',
@@ -82,6 +83,7 @@ test('create Package Weights Map | error in aggregation', async (t) => {
 test('bail on empty package weights map meaning user has no installs', async (t) => {
   const donationAmount = 500000 // 5 bucks in mc
   await t.context.mongo.distributeUserDonation({
+    description: t.context.description,
     userId: t.context.userId,
     packageWeightsMap: new Map(),
     donationAmount
@@ -94,11 +96,17 @@ test('distribute User Donation | success', async (t) => {
   const expectedTotalMass = t.context.packageInstallsForUser.reduce((acc, val) => acc + val.weight, 0)
   const donationAmount = 1000000 // 10 bucks in mc
   const packageWeightsMap = t.context.packageWeightsMap
-  await t.context.mongo.distributeUserDonation({ userId: t.context.userId, packageWeightsMap, donationAmount })
+  await t.context.mongo.distributeUserDonation({
+    userId: t.context.userId,
+    packageWeightsMap,
+    donationAmount,
+    description: t.context.description
+  })
   // 3 pushes for 3 diff packages in our packageWeightsMap
   t.true(t.context.mongo.db.collection().initializeUnorderedBulkOp().find().updateOne.calledWith({
     $push: {
       donationRevenue: {
+        description: t.context.description,
         userId: t.context.userId,
         timestamp: 1234,
         id: 'this-is-a-ulid',
@@ -109,6 +117,7 @@ test('distribute User Donation | success', async (t) => {
   t.true(t.context.mongo.db.collection().initializeUnorderedBulkOp().find().updateOne.calledWith({
     $push: {
       donationRevenue: {
+        description: t.context.description,
         userId: t.context.userId,
         timestamp: 1234,
         id: 'this-is-a-ulid',
@@ -119,6 +128,7 @@ test('distribute User Donation | success', async (t) => {
   t.true(t.context.mongo.db.collection().initializeUnorderedBulkOp().find().updateOne.calledWith({
     $push: {
       donationRevenue: {
+        description: t.context.description,
         userId: t.context.userId,
         timestamp: 1234,
         id: 'this-is-a-ulid',
