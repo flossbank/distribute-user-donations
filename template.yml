@@ -15,11 +15,11 @@ Resources:
       RedrivePolicy:
         deadLetterTargetArn: !GetAtt DistributeUserDonationsDeadLetterQueue.Arn
         maxReceiveCount: 3
-      VisibilityTimeout: 240
+      VisibilityTimeout: 300
   DistributeUserDonationsFunction:
     Type: AWS::Serverless::Function
     Properties:
-      Timeout: 180
+      Timeout: 240
       Handler: index.handler
       Runtime: nodejs10.x
       CodeUri: ./

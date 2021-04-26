@@ -46,7 +46,8 @@ test('process | success', async (t) => {
   t.true(t.context.db.distributeUserDonation.calledWith({
     donationAmount: expectedDonationAmount,
     packageWeightsMap: {},
-    userId: 'test-user-id'
+    userId: 'test-user-id',
+    description: 'testing donation'
   }))
   t.deepEqual(res, { success: true })
 })
