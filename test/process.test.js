@@ -13,7 +13,7 @@ test.beforeEach((t) => {
   }
   t.context.log = { log: sinon.stub() }
   t.context.recordBody = {
-    amount: 1000,
+    amount: 1000000,
     timestamp: 1234,
     userId: 'test-user-id',
     description: 'testing donation'
@@ -22,7 +22,7 @@ test.beforeEach((t) => {
     body: JSON.stringify(t.context.recordBody)
   }
   t.context.undefinedUserRecordBody = {
-    amount: 1000,
+    amount: 1000000,
     timestamp: 1234,
     userId: undefined,
     description: 'testing donation'
@@ -42,7 +42,7 @@ test('process | success', async (t) => {
   t.true(t.context.log.log.calledWith({ ...t.context.recordBody }))
   t.true(t.context.dynamo.lockUser.calledWith({ userId: 'test-user-id' }))
   t.true(t.context.log.log.calledWith({ lockInfo: { success: true } }))
-  const expectedDonationAmount = ((t.context.recordBody.amount * 0.94) - 30) * 1000
+  const expectedDonationAmount = (t.context.recordBody.amount * 0.94) - 30
   t.true(t.context.db.distributeUserDonation.calledWith({
     donationAmount: expectedDonationAmount,
     packageWeightsMap: {},
