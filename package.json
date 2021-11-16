@@ -9,7 +9,7 @@
     "test": "standard && ava -v"
   },
   "dependencies": {
-    "aws-sdk": "^2.543.0",
+    "aws-sdk": "^2.814.0",
     "mongodb": "^3.4.1",
     "ulid": "^2.3.0"
   },
